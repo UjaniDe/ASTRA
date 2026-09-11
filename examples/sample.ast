@@ -1,0 +1,9 @@
+workflow analyze_project {
+    compare "main" with "feature"
+    analyze_changes
+    if security_change {
+        report
+    } else {
+        run_tests
+    }
+}
