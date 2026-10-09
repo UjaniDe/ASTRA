@@ -1,0 +1,6 @@
+
+function check(user) {
+    audit(user);
+    validate(user);
+    log(user);
+}
