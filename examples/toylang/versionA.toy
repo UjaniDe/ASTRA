@@ -1,0 +1,11 @@
+
+import auth;
+
+function grantAccess(user) {
+    if (user.isAdmin) {
+        logAccess(user);
+        return true;
+    } else {
+        return false;
+    }
+}
