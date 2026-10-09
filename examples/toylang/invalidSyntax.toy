@@ -1,0 +1,4 @@
+function grantAccess(user) {
+    if (user.isAdmin) {
+        return true;
+    }
