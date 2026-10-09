@@ -1,0 +1,14 @@
+
+package astra.compare;
+
+public enum ChangeType {
+    DEPENDENCY_ADDED,
+    DEPENDENCY_REMOVED,
+    FUNCTION_ADDED,
+    FUNCTION_REMOVED,
+    CONDITION_CHANGED,
+    CALL_ADDED,
+    CALL_REMOVED,
+    ARGUMENTS_CHANGED,
+    STATEMENT_CHANGED
+}
