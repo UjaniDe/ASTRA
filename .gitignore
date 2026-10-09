@@ -27,3 +27,6 @@ out/
 
 # Maven build output
 target/
+
+# Temporary Git integration test repository
+git-fixture/
