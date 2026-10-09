@@ -24,3 +24,9 @@ hs_err_pid*
 
 # ASTRA compiled output
 out/
+
+# Maven build output
+target/
+
+# Temporary Git integration test repository
+git-fixture/
