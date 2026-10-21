@@ -13,8 +13,7 @@ printf '========================================\n\n'
 ./bin/astra --version
 
 printf '\n'
-printf 'Available commands:\n\n'
-./bin/astra --help
+printf 'Commands: analyze | compare | run | demo | test\n'
 
 printf '\n'
 printf '========================================\n'

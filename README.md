@@ -184,3 +184,48 @@ toy-language parser are currently supported.
 ## Repository
 
 https://github.com/UjaniDe/ASTRA
+
+
+## ASTRA Command-Line Interface
+
+ASTRA provides a command-line interface for compiling workflows
+and comparing Git revisions structurally.
+
+### Build
+
+Run:
+
+    mvn clean test
+    mvn dependency:build-classpath -Dmdep.outputFile=target/runtime-classpath.txt
+
+### Available commands
+
+    ./bin/astra --help
+    ./bin/astra --version
+    ./bin/astra demo
+    ./bin/astra test
+
+Compare one file:
+
+    ./bin/astra compare --repo . --from <old> --to <new> --file path/to/file.toy
+
+Analyze all modified toy-language files:
+
+    ./bin/astra analyze --repo . --from <old> --to <new>
+
+Run a workflow:
+
+    ./bin/astra run examples/github-demo.ast --repo . --all-changed
+
+Use `--trace` with analysis commands to display the compiler
+pipeline and VM execution details.
+
+### Offline final-review demonstration
+
+From the repository root:
+
+    ./scripts/present.sh
+
+The demonstration uses Git revisions stored in the local ASTRA
+repository, so it does not require internet connectivity.
+

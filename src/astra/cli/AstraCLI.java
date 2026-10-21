@@ -239,8 +239,9 @@ public final class AstraCLI {
         System.out.println("======================================");
         System.out.println("Compiler-driven Git change detection");
         System.out.println();
-        System.out.println("Demo: Comparing two committed versions");
-        System.out.println("Source: examples/toylang/github-demo.toy");
+        System.out.println("Repository : UjaniDe/ASTRA (local clone)");
+        System.out.println("Revisions  : ec45173 -> bac3431");
+        System.out.println("Source     : examples/toylang/github-demo.toy");
         System.out.println();
 
         String[] arguments = {
