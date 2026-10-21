@@ -228,4 +228,3 @@ From the repository root:
 
 The demonstration uses Git revisions stored in the local ASTRA
 repository, so it does not require internet connectivity.
-
