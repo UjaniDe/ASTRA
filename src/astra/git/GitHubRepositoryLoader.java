@@ -13,9 +13,14 @@ public class GitHubRepositoryLoader implements AutoCloseable {
     private final Path cloneDirectory;
 
     public GitHubRepositoryLoader(String repositoryUrl) throws Exception {
-        if (repositoryUrl == null ||
-                !repositoryUrl.matches(
-                    "https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?/?")) {
+        this(repositoryUrl, true);
+    }
+
+    GitHubRepositoryLoader(String repositoryUrl, boolean requireGitHub)
+            throws Exception {
+        if (repositoryUrl == null || repositoryUrl.isBlank() ||
+                (requireGitHub && !repositoryUrl.matches(
+                    "https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\\.git)?/?"))) {
             throw new IllegalArgumentException(
                 "Expected a public GitHub HTTPS repository URL"
             );
