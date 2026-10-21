@@ -9,6 +9,7 @@ import astra.bytecode.BytecodeGenerator;
 import astra.bytecode.Instruction;
 import astra.vm.RuntimeEnvironment;
 import astra.vm.VM;
+import astra.git.GitHubRepositoryLoader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,7 +59,9 @@ public class Main {
             System.exit(1);
         }
 
-        if (!Files.isDirectory(repositoryPath)) {
+        boolean remoteRepository = args[1].startsWith("https://");
+
+        if (!remoteRepository && !Files.isDirectory(repositoryPath)) {
             System.err.println(
                 "ASTRA ERROR: Repository directory not found: " + repositoryPath
             );
@@ -145,11 +148,21 @@ public class Main {
             env.setTestExecutionEnabled(true);
         }
 
-        VM vm = new VM(bytecode, env);
-
         try {
-            vm.run();
-        } catch (RuntimeException e) {
+            if (remoteRepository) {
+                try (GitHubRepositoryLoader loader =
+                        new GitHubRepositoryLoader(args[1])) {
+
+                    env.setRepositoryPath(loader.getRepositoryPath());
+
+                    VM vm = new VM(bytecode, env);
+                    vm.run();
+                }
+            } else {
+                VM vm = new VM(bytecode, env);
+                vm.run();
+            }
+        } catch (Exception e) {
             System.err.println(
                 "ASTRA ERROR: " + e.getMessage()
             );
