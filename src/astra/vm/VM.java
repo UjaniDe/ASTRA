@@ -34,6 +34,10 @@ public class VM {
         while (ip < program.size()) {
             Instruction instr = program.get(ip);
 
+            if (env.isTraceEnabled()) {
+                System.out.printf("[TRACE] IP=%d  %s%n", ip, instr);
+            }
+
             switch (instr.opcode) {
                 case PUSH_STRING -> {
                     stack.push(instr.operand);

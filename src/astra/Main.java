@@ -16,19 +16,61 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        if (args.length != 3 && args.length != 4) {
+        if (args.length < 3) {
             System.out.println(
                 "Usage: java astra.Main <workflow.ast> <repository-path> "
-                + "<source-file-path> [--run-tests]"
+                + "<source-file-path> [--run-tests] [--trace] "
+                + "[--test-project <directory>]"
             );
             return;
         }
 
-        if (args.length == 4 && !args[3].equals("--run-tests")) {
-            System.out.println("Unknown option: " + args[3]);
-            return;
+        boolean runTests = false;
+        boolean trace = false;
+        String testProject = ".";
+
+        for (int i = 3; i < args.length; i++) {
+            switch (args[i]) {
+                case "--run-tests" -> runTests = true;
+                case "--trace" -> trace = true;
+                case "--test-project" -> {
+                    if (i + 1 >= args.length) {
+                        System.err.println(
+                            "ASTRA ERROR: --test-project requires a directory"
+                        );
+                        return;
+                    }
+                    testProject = args[++i];
+                }
+                default -> {
+                    System.err.println("Unknown option: " + args[i]);
+                    return;
+                }
+            }
         }
-        String source = Files.readString(Path.of(args[0]));
+        Path workflowPath = Path.of(args[0]);
+        Path repositoryPath = Path.of(args[1]);
+
+        if (!Files.isRegularFile(workflowPath)) {
+            System.err.println(
+                "ASTRA ERROR: Workflow file not found: " + workflowPath
+            );
+            System.exit(1);
+        }
+
+        if (!Files.isDirectory(repositoryPath)) {
+            System.err.println(
+                "ASTRA ERROR: Repository directory not found: " + repositoryPath
+            );
+            System.exit(1);
+        }
+
+        if (args[2].isBlank()) {
+            System.err.println("ASTRA ERROR: Source file path cannot be empty.");
+            System.exit(1);
+        }
+
+        String source = Files.readString(workflowPath);
 
         Lexer lexer = new Lexer(source);
         List<Token> tokens = lexer.tokenize();
@@ -77,14 +119,41 @@ public class Main {
         env.setRepositoryPath(args[1]);
         env.setSourceFilePath(args[2]);
 
-        if (args.length == 4) {
-            env.setTestProjectPath(
-                Path.of(".").toAbsolutePath().normalize().toString()
-            );
+        env.setTraceEnabled(trace);
+
+        if (runTests) {
+            Path testProjectDir = Path.of(testProject)
+                .toAbsolutePath().normalize();
+
+            if (!Files.isDirectory(testProjectDir)) {
+                System.err.println(
+                    "ASTRA ERROR: Test project directory not found: "
+                    + testProjectDir
+                );
+                System.exit(1);
+            }
+
+            if (!Files.isRegularFile(testProjectDir.resolve("pom.xml"))) {
+                System.err.println(
+                    "ASTRA ERROR: No pom.xml found in test project: "
+                    + testProjectDir
+                );
+                System.exit(1);
+            }
+
+            env.setTestProjectPath(testProjectDir.toString());
             env.setTestExecutionEnabled(true);
         }
 
         VM vm = new VM(bytecode, env);
-        vm.run();
+
+        try {
+            vm.run();
+        } catch (RuntimeException e) {
+            System.err.println(
+                "ASTRA ERROR: " + e.getMessage()
+            );
+            System.exit(1);
+        }
     }
 }

@@ -25,6 +25,16 @@ public class RuntimeEnvironment {
         return testExecutionEnabled;
     }
 
+    private boolean traceEnabled = false;
+
+    public void setTraceEnabled(boolean enabled) {
+        this.traceEnabled = enabled;
+    }
+
+    public boolean isTraceEnabled() {
+        return traceEnabled;
+    }
+
     private String repositoryPath;
     private String sourceFilePath;
 
