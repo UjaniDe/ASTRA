@@ -6,6 +6,25 @@ import java.util.Map;
 public class RuntimeEnvironment {
     private final Map<String, Boolean> conditions = new HashMap<>();
 
+    private String testProjectPath;
+    private boolean testExecutionEnabled = false;
+
+    public void setTestProjectPath(String path) {
+        this.testProjectPath = path;
+    }
+
+    public String getTestProjectPath() {
+        return testProjectPath;
+    }
+
+    public void setTestExecutionEnabled(boolean enabled) {
+        this.testExecutionEnabled = enabled;
+    }
+
+    public boolean isTestExecutionEnabled() {
+        return testExecutionEnabled;
+    }
+
     private String repositoryPath;
     private String sourceFilePath;
 

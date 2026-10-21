@@ -16,10 +16,16 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        if (args.length != 3) {
+        if (args.length != 3 && args.length != 4) {
             System.out.println(
-                "Usage: java astra.Main <workflow.ast> <repository-path> <source-file-path>"
+                "Usage: java astra.Main <workflow.ast> <repository-path> "
+                + "<source-file-path> [--run-tests]"
             );
+            return;
+        }
+
+        if (args.length == 4 && !args[3].equals("--run-tests")) {
+            System.out.println("Unknown option: " + args[3]);
             return;
         }
         String source = Files.readString(Path.of(args[0]));
@@ -70,6 +76,13 @@ public class Main {
 
         env.setRepositoryPath(args[1]);
         env.setSourceFilePath(args[2]);
+
+        if (args.length == 4) {
+            env.setTestProjectPath(
+                Path.of(".").toAbsolutePath().normalize().toString()
+            );
+            env.setTestExecutionEnabled(true);
+        }
 
         VM vm = new VM(bytecode, env);
         vm.run();

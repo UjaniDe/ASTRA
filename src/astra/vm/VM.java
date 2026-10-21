@@ -105,7 +105,63 @@ public class VM {
                     ip++;
                 }
                 case RUN_TESTS -> {
-                    System.out.println("Running tests...");
+                    if (!env.isTestExecutionEnabled()) {
+                        System.out.println(
+                            "Running tests... (execution disabled)"
+                        );
+                        ip++;
+                        break;
+                    }
+
+                    String projectPath = env.getTestProjectPath();
+
+                    if (projectPath == null || projectPath.isBlank()) {
+                        throw new IllegalStateException(
+                            "Test project path must be configured"
+                        );
+                    }
+
+                    System.out.println("=== ASTRA TEST EXECUTION ===");
+
+                    try {
+                        ProcessBuilder builder = new ProcessBuilder(
+                            "mvn", "-q", "test"
+                        );
+
+                        builder.directory(
+                            java.nio.file.Path.of(projectPath)
+                                .toAbsolutePath().toFile()
+                        );
+
+                        builder.inheritIO();
+
+                        Process process = builder.start();
+                        int exitCode = process.waitFor();
+
+                        System.out.println(
+                            "Maven test exit code: " + exitCode
+                        );
+
+                        if (exitCode != 0) {
+                            throw new RuntimeException(
+                                "Automated tests failed with exit code "
+                                + exitCode
+                            );
+                        }
+
+                        System.out.println("Automated tests passed.");
+
+                    } catch (java.io.IOException e) {
+                        throw new RuntimeException(
+                            "Failed to start Maven tests", e
+                        );
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(
+                            "Test execution interrupted", e
+                        );
+                    }
+
                     ip++;
                 }
                 case REPORT -> {
