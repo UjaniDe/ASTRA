@@ -119,6 +119,39 @@ The script automatically:
 
 The temporary repository is automatically removed afterward.
 
+## Live GitHub commit comparison
+
+ASTRA can clone a public GitHub repository and compare a supported
+toy-language file between two actual commits.
+
+Build the project:
+
+    mvn clean test
+    mvn dependency:build-classpath -Dmdep.outputFile=target/runtime-classpath.txt
+
+Run the GitHub demonstration:
+
+    CP="target/classes:$(cat target/runtime-classpath.txt)"
+
+    java -cp "$CP" astra.Main \
+      examples/github-demo.ast \
+      https://github.com/UjaniDe/ASTRA.git \
+      examples/toylang/github-demo.toy \
+      --trace
+
+This demonstration retrieves two committed versions of github-demo.toy
+directly from GitHub and detects:
+
+- One added dependency
+- One modified condition
+- One function-call argument modification
+
+The repository is cloned into a temporary directory and automatically
+cleaned up afterward.
+
+Only public GitHub HTTPS repositories and files supported by the
+toy-language parser are currently supported.
+
 ## Repository
 
 https://github.com/UjaniDe/ASTRA
