@@ -18,6 +18,9 @@ public class VM {
     private final Deque<Object> stack = new ArrayDeque<>();
     private int ip = 0; // instruction pointer
     private List<StructuralChange> detectedChanges = new ArrayList<>();
+    private java.util.Map<String, java.util.List<StructuralChange>>
+        changesByFile = java.util.Map.of();
+
     private String lastOldRevision;
     private String lastNewRevision;
 
@@ -61,7 +64,8 @@ public class VM {
                     String repo = env.getRepositoryPath();
                     String file = env.getSourceFilePath();
 
-                    if (repo == null || file == null) {
+                    if (repo == null ||
+                            (!env.isAllChangedEnabled() && file == null)) {
                         throw new IllegalStateException(
                             "Git comparison requires repository and source-file paths"
                         );
@@ -71,9 +75,27 @@ public class VM {
                         GitComparisonService service =
                             new GitComparisonService(repo);
 
-                        detectedChanges = new ArrayList<>(
-                            service.compare(oldRevision, newRevision, file)
-                        );
+                        if (env.isAllChangedEnabled()) {
+                            changesByFile = service.compareChangedToyFiles(
+                                oldRevision, newRevision
+                            );
+
+                            detectedChanges = new ArrayList<>();
+
+                            for (var changes : changesByFile.values()) {
+                                detectedChanges.addAll(changes);
+                            }
+
+                            System.out.println(
+                                "Modified .toy files discovered: "
+                                + changesByFile.size()
+                            );
+                        } else {
+                            detectedChanges = new ArrayList<>(
+                                service.compare(oldRevision, newRevision, file)
+                            );
+                            changesByFile = java.util.Map.of();
+                        }
 
                         System.out.println("Structural changes detected: "
                             + detectedChanges.size());
@@ -171,13 +193,47 @@ public class VM {
                 case REPORT -> {
                     System.out.println("=== ASTRA REPORT ===");
                     System.out.println("Repository: " + env.getRepositoryPath());
-                    System.out.println("File: " + env.getSourceFilePath());
+                    if (env.isAllChangedEnabled()) {
+                        System.out.println(
+                            "Mode: All modified .toy files"
+                        );
+                    } else {
+                        System.out.println(
+                            "File: " + env.getSourceFilePath()
+                        );
+                    }
                     System.out.println("Compared revisions: "
                         + lastOldRevision + " -> " + lastNewRevision);
                     System.out.println("Total structural changes: "
                         + detectedChanges.size());
 
-                    if (detectedChanges.isEmpty()) {
+                    if (env.isAllChangedEnabled()) {
+                        System.out.println("Modified .toy files: "
+                            + changesByFile.size());
+
+                        if (changesByFile.isEmpty()) {
+                            System.out.println(
+                                "No modified .toy files detected."
+                            );
+                        }
+
+                        for (var entry : changesByFile.entrySet()) {
+                            System.out.println();
+                            System.out.println("=== FILE: "
+                                + entry.getKey() + " ===");
+
+                            if (entry.getValue().isEmpty()) {
+                                System.out.println(
+                                    "No structural changes detected."
+                                );
+                            }
+
+                            for (StructuralChange change : entry.getValue()) {
+                                System.out.print(change);
+                                System.out.println();
+                            }
+                        }
+                    } else if (detectedChanges.isEmpty()) {
                         System.out.println("No structural changes detected.");
                     } else {
                         System.out.println();

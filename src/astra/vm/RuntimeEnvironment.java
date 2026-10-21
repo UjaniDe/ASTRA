@@ -37,6 +37,15 @@ public class RuntimeEnvironment {
 
     private String repositoryPath;
     private String sourceFilePath;
+    private boolean allChangedEnabled = false;
+
+    public void setAllChangedEnabled(boolean enabled) {
+        this.allChangedEnabled = enabled;
+    }
+
+    public boolean isAllChangedEnabled() {
+        return allChangedEnabled;
+    }
 
     public void setCondition(String name, boolean value) {
         conditions.put(name, value);

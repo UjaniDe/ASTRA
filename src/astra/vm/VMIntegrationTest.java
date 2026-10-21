@@ -113,4 +113,84 @@ class VMIntegrationTest {
             assertFalse(env.getCondition("has_changes"));
         }
     }
+    @Test
+    void automaticallyComparesMultipleModifiedFiles() throws Exception {
+        Path access = tempDir.resolve("access.toy");
+        Path logging = tempDir.resolve("logging.toy");
+
+        try (Git git = Git.init()
+                .setDirectory(tempDir.toFile()).call()) {
+
+            Files.writeString(access, """
+                function grantAccess(user) {
+                    if (user.isAdmin) {
+                        logAccess(user);
+                    }
+                }
+                """);
+
+            Files.writeString(logging, """
+                function record(user) {
+                    logAccess(user);
+                }
+                """);
+
+            git.add().addFilepattern(".").call();
+
+            String oldRevision = git.commit()
+                .setMessage("Version A")
+                .setAuthor("ASTRA Test", "test@example.com")
+                .call().getName();
+
+            Files.writeString(access, """
+                function grantAccess(user) {
+                    if (user.isAdmin || user.isGuest) {
+                        logAccess(user);
+                    }
+                }
+                """);
+
+            Files.writeString(logging, """
+                function record(user) {
+                    logAccess(user, "granted");
+                }
+                """);
+
+            git.add().addFilepattern(".").call();
+
+            String newRevision = git.commit()
+                .setMessage("Version B")
+                .setAuthor("ASTRA Test", "test@example.com")
+                .call().getName();
+
+            RuntimeEnvironment env = new RuntimeEnvironment();
+            env.setRepositoryPath(tempDir.toString());
+            env.setAllChangedEnabled(true);
+
+            List<Instruction> program = List.of(
+                new Instruction(OpCode.PUSH_STRING, oldRevision),
+                new Instruction(OpCode.PUSH_STRING, newRevision),
+                new Instruction(OpCode.COMPARE, null),
+                new Instruction(OpCode.ANALYZE_CHANGES, null),
+                new Instruction(OpCode.HALT, null)
+            );
+
+            VM vm = new VM(program, env);
+            vm.run();
+
+            assertEquals(2, vm.getDetectedChanges().size());
+
+            assertTrue(vm.getDetectedChanges().stream()
+                .anyMatch(c ->
+                    c.type == ChangeType.CONDITION_CHANGED));
+
+            assertTrue(vm.getDetectedChanges().stream()
+                .anyMatch(c ->
+                    c.type == ChangeType.ARGUMENTS_CHANGED));
+
+            assertTrue(env.getCondition("security_change"));
+            assertTrue(env.getCondition("has_changes"));
+        }
+    }
+
 }

@@ -119,6 +119,35 @@ The script automatically:
 
 The temporary repository is automatically removed afterward.
 
+
+### Automatic changed-file comparison
+
+ASTRA can automatically discover and analyze modified `.toy` files
+between the two Git revisions specified in a workflow.
+
+Build the project using `mvn clean test`, then generate the runtime classpath:
+
+    mvn dependency:build-classpath -Dmdep.outputFile=target/runtime-classpath.txt
+
+Run automatic comparison against GitHub:
+
+    CP="target/classes:$(cat target/runtime-classpath.txt)"
+
+    java -cp "$CP" astra.Main examples/github-demo.ast https://github.com/UjaniDe/ASTRA.git --all-changed --trace
+
+In this mode, ASTRA discovers modified `.toy` files, compares their
+ASTs, combines structural changes for workflow conditions, and
+reports results grouped by filename.
+
+Limitations:
+
+- Only modified `.toy` files are analyzed; added, deleted, and
+  renamed files are not currently supported.
+- Parsing uses ASTRA's toy-language grammar, not a general-purpose
+  Java or Python parser.
+- The `security_change` flag indicates a changed condition, not
+  a confirmed security vulnerability.
+
 ## Live GitHub commit comparison
 
 ASTRA can clone a public GitHub repository and compare a supported

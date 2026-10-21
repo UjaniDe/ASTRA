@@ -20,7 +20,7 @@ public class Main {
         if (args.length < 3) {
             System.out.println(
                 "Usage: java astra.Main <workflow.ast> <repository-path> "
-                + "<source-file-path> [--run-tests] [--trace] "
+                + "<source-file-path|--all-changed> [--run-tests] [--trace] "
                 + "[--test-project <directory>]"
             );
             return;
@@ -120,7 +120,10 @@ public class Main {
         RuntimeEnvironment env = new RuntimeEnvironment();
 
         env.setRepositoryPath(args[1]);
-        env.setSourceFilePath(args[2]);
+        env.setAllChangedEnabled("--all-changed".equals(args[2]));
+        env.setSourceFilePath(
+            env.isAllChangedEnabled() ? null : args[2]
+        );
 
         env.setTraceEnabled(trace);
 
