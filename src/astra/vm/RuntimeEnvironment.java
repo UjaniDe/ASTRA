@@ -6,6 +6,9 @@ import java.util.Map;
 public class RuntimeEnvironment {
     private final Map<String, Boolean> conditions = new HashMap<>();
 
+    private String repositoryPath;
+    private String sourceFilePath;
+
     public void setCondition(String name, boolean value) {
         conditions.put(name, value);
     }
@@ -17,5 +20,21 @@ public class RuntimeEnvironment {
             return false;
         }
         return conditions.get(name);
+    }
+
+    public void setRepositoryPath(String repositoryPath) {
+        this.repositoryPath = repositoryPath;
+    }
+
+    public String getRepositoryPath() {
+        return repositoryPath;
+    }
+
+    public void setSourceFilePath(String sourceFilePath) {
+        this.sourceFilePath = sourceFilePath;
+    }
+
+    public String getSourceFilePath() {
+        return sourceFilePath;
     }
 }

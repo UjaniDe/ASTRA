@@ -46,7 +46,7 @@ public class VMTest {
         new VM(ifElseProgram(), env).run();
 
         String output = captured.toString();
-        assertTrue(output.contains("Generating report..."));
+        assertTrue(output.contains("=== ASTRA REPORT ==="));
         assertFalse(output.contains("Running tests..."));
     }
 
@@ -62,17 +62,24 @@ public class VMTest {
     }
 
     @Test
-    void compareOpcodePrintsBothOperands() {
+    void compareRequiresRepositoryConfiguration() {
         RuntimeEnvironment env = new RuntimeEnvironment();
+
         List<Instruction> program = List.of(
             new Instruction(OpCode.PUSH_STRING, "main"),
             new Instruction(OpCode.PUSH_STRING, "feature"),
             new Instruction(OpCode.COMPARE, null),
             new Instruction(OpCode.HALT, null)
         );
-        new VM(program, env).run();
 
-        assertTrue(captured.toString().contains("Comparing branch \"main\" with \"feature\""));
+        IllegalStateException error = assertThrows(
+            IllegalStateException.class,
+            () -> new VM(program, env).run()
+        );
+
+        assertTrue(error.getMessage().contains(
+            "requires repository and source-file paths"
+        ));
     }
 
     @Test

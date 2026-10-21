@@ -2,6 +2,11 @@ package astra.vm;
 
 import astra.bytecode.Instruction;
 import astra.bytecode.OpCode;
+import astra.git.GitComparisonService;
+import astra.compare.StructuralChange;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -12,6 +17,13 @@ public class VM {
     private final RuntimeEnvironment env;
     private final Deque<Object> stack = new ArrayDeque<>();
     private int ip = 0; // instruction pointer
+    private List<StructuralChange> detectedChanges = new ArrayList<>();
+    private String lastOldRevision;
+    private String lastNewRevision;
+
+    public List<StructuralChange> getDetectedChanges() {
+        return Collections.unmodifiableList(detectedChanges);
+    }
 
     public VM(List<Instruction> program, RuntimeEnvironment env) {
         this.program = program;
@@ -33,13 +45,63 @@ public class VM {
                     ip++;
                 }
                 case COMPARE -> {
-                    Object b = stack.pop();
-                    Object a = stack.pop();
-                    System.out.println("Comparing branch \"" + a + "\" with \"" + b + "\"");
+                    String newRevision = (String) stack.pop();
+                    String oldRevision = (String) stack.pop();
+
+                    System.out.println("Comparing branch \"" + oldRevision
+                        + "\" with \"" + newRevision + "\"");
+
+                    lastOldRevision = oldRevision;
+                    lastNewRevision = newRevision;
+
+                    String repo = env.getRepositoryPath();
+                    String file = env.getSourceFilePath();
+
+                    if (repo == null || file == null) {
+                        throw new IllegalStateException(
+                            "Git comparison requires repository and source-file paths"
+                        );
+                    }
+
+                    try {
+                        GitComparisonService service =
+                            new GitComparisonService(repo);
+
+                        detectedChanges = new ArrayList<>(
+                            service.compare(oldRevision, newRevision, file)
+                        );
+
+                        System.out.println("Structural changes detected: "
+                            + detectedChanges.size());
+
+                    } catch (Exception e) {
+                        throw new RuntimeException(
+                            "Git structural comparison failed: "
+                            + e.getMessage(), e
+                        );
+                    }
+
                     ip++;
                 }
                 case ANALYZE_CHANGES -> {
-                    System.out.println("Analyzing structural changes...");
+                    System.out.println("=== STRUCTURAL ANALYSIS ===");
+
+                    int total = detectedChanges.size();
+
+                    long conditionChanges = detectedChanges.stream()
+                        .filter(change ->
+                            change.type == astra.compare.ChangeType.CONDITION_CHANGED)
+                        .count();
+
+                    boolean securityChange = conditionChanges > 0;
+
+                    env.setCondition("security_change", securityChange);
+                    env.setCondition("has_changes", total > 0);
+
+                    System.out.println("Total structural changes: " + total);
+                    System.out.println("Modified conditions: " + conditionChanges);
+                    System.out.println("Security review flag: " + securityChange);
+
                     ip++;
                 }
                 case RUN_TESTS -> {
@@ -47,7 +109,24 @@ public class VM {
                     ip++;
                 }
                 case REPORT -> {
-                    System.out.println("Generating report...");
+                    System.out.println("=== ASTRA REPORT ===");
+                    System.out.println("Repository: " + env.getRepositoryPath());
+                    System.out.println("File: " + env.getSourceFilePath());
+                    System.out.println("Compared revisions: "
+                        + lastOldRevision + " -> " + lastNewRevision);
+                    System.out.println("Total structural changes: "
+                        + detectedChanges.size());
+
+                    if (detectedChanges.isEmpty()) {
+                        System.out.println("No structural changes detected.");
+                    } else {
+                        System.out.println();
+                        for (StructuralChange change : detectedChanges) {
+                            System.out.print(change);
+                            System.out.println();
+                        }
+                    }
+
                     ip++;
                 }
                 case JUMP -> ip = (Integer) instr.operand;

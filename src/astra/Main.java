@@ -16,8 +16,10 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        if (args.length < 1) {
-            System.out.println("Usage: java astra.Main <file.ast>");
+        if (args.length != 3) {
+            System.out.println(
+                "Usage: java astra.Main <workflow.ast> <repository-path> <source-file-path>"
+            );
             return;
         }
         String source = Files.readString(Path.of(args[0]));
@@ -65,8 +67,9 @@ public class Main {
 
         System.out.println("\n=== VM EXECUTION ===");
         RuntimeEnvironment env = new RuntimeEnvironment();
-        // Demo condition values — Phase 3 will populate these from real Git-based analysis
-      env.setCondition("security_change", true);
+
+        env.setRepositoryPath(args[1]);
+        env.setSourceFilePath(args[2]);
 
         VM vm = new VM(bytecode, env);
         vm.run();
