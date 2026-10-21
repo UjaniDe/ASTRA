@@ -9,6 +9,7 @@ import astra.bytecode.BytecodeGenerator;
 import astra.bytecode.Instruction;
 import astra.vm.RuntimeEnvironment;
 import astra.vm.VM;
+import astra.git.GitHubRepositoryLoader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,11 +17,63 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        if (args.length < 1) {
-            System.out.println("Usage: java astra.Main <file.ast>");
+        if (args.length < 3) {
+            System.out.println(
+                "Usage: java astra.Main <workflow.ast> <repository-path> "
+                + "<source-file-path|--all-changed> [--run-tests] [--trace] "
+                + "[--test-project <directory>]"
+            );
             return;
         }
-        String source = Files.readString(Path.of(args[0]));
+
+        boolean runTests = false;
+        boolean trace = false;
+        String testProject = ".";
+
+        for (int i = 3; i < args.length; i++) {
+            switch (args[i]) {
+                case "--run-tests" -> runTests = true;
+                case "--trace" -> trace = true;
+                case "--test-project" -> {
+                    if (i + 1 >= args.length) {
+                        System.err.println(
+                            "ASTRA ERROR: --test-project requires a directory"
+                        );
+                        return;
+                    }
+                    testProject = args[++i];
+                }
+                default -> {
+                    System.err.println("Unknown option: " + args[i]);
+                    return;
+                }
+            }
+        }
+        Path workflowPath = Path.of(args[0]);
+        Path repositoryPath = Path.of(args[1]);
+
+        if (!Files.isRegularFile(workflowPath)) {
+            System.err.println(
+                "ASTRA ERROR: Workflow file not found: " + workflowPath
+            );
+            System.exit(1);
+        }
+
+        boolean remoteRepository = args[1].startsWith("https://");
+
+        if (!remoteRepository && !Files.isDirectory(repositoryPath)) {
+            System.err.println(
+                "ASTRA ERROR: Repository directory not found: " + repositoryPath
+            );
+            System.exit(1);
+        }
+
+        if (args[2].isBlank()) {
+            System.err.println("ASTRA ERROR: Source file path cannot be empty.");
+            System.exit(1);
+        }
+
+        String source = Files.readString(workflowPath);
 
         Lexer lexer = new Lexer(source);
         List<Token> tokens = lexer.tokenize();
@@ -65,10 +118,58 @@ public class Main {
 
         System.out.println("\n=== VM EXECUTION ===");
         RuntimeEnvironment env = new RuntimeEnvironment();
-        // Demo condition values — Phase 3 will populate these from real Git-based analysis
-      env.setCondition("security_change", true);
 
-        VM vm = new VM(bytecode, env);
-        vm.run();
+        env.setRepositoryPath(args[1]);
+        env.setAllChangedEnabled("--all-changed".equals(args[2]));
+        env.setSourceFilePath(
+            env.isAllChangedEnabled() ? null : args[2]
+        );
+
+        env.setTraceEnabled(trace);
+
+        if (runTests) {
+            Path testProjectDir = Path.of(testProject)
+                .toAbsolutePath().normalize();
+
+            if (!Files.isDirectory(testProjectDir)) {
+                System.err.println(
+                    "ASTRA ERROR: Test project directory not found: "
+                    + testProjectDir
+                );
+                System.exit(1);
+            }
+
+            if (!Files.isRegularFile(testProjectDir.resolve("pom.xml"))) {
+                System.err.println(
+                    "ASTRA ERROR: No pom.xml found in test project: "
+                    + testProjectDir
+                );
+                System.exit(1);
+            }
+
+            env.setTestProjectPath(testProjectDir.toString());
+            env.setTestExecutionEnabled(true);
+        }
+
+        try {
+            if (remoteRepository) {
+                try (GitHubRepositoryLoader loader =
+                        new GitHubRepositoryLoader(args[1])) {
+
+                    env.setRepositoryPath(loader.getRepositoryPath());
+
+                    VM vm = new VM(bytecode, env);
+                    vm.run();
+                }
+            } else {
+                VM vm = new VM(bytecode, env);
+                vm.run();
+            }
+        } catch (Exception e) {
+            System.err.println(
+                "ASTRA ERROR: " + e.getMessage()
+            );
+            System.exit(1);
+        }
     }
 }

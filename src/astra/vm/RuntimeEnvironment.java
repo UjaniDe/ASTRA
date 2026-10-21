@@ -6,6 +6,47 @@ import java.util.Map;
 public class RuntimeEnvironment {
     private final Map<String, Boolean> conditions = new HashMap<>();
 
+    private String testProjectPath;
+    private boolean testExecutionEnabled = false;
+
+    public void setTestProjectPath(String path) {
+        this.testProjectPath = path;
+    }
+
+    public String getTestProjectPath() {
+        return testProjectPath;
+    }
+
+    public void setTestExecutionEnabled(boolean enabled) {
+        this.testExecutionEnabled = enabled;
+    }
+
+    public boolean isTestExecutionEnabled() {
+        return testExecutionEnabled;
+    }
+
+    private boolean traceEnabled = false;
+
+    public void setTraceEnabled(boolean enabled) {
+        this.traceEnabled = enabled;
+    }
+
+    public boolean isTraceEnabled() {
+        return traceEnabled;
+    }
+
+    private String repositoryPath;
+    private String sourceFilePath;
+    private boolean allChangedEnabled = false;
+
+    public void setAllChangedEnabled(boolean enabled) {
+        this.allChangedEnabled = enabled;
+    }
+
+    public boolean isAllChangedEnabled() {
+        return allChangedEnabled;
+    }
+
     public void setCondition(String name, boolean value) {
         conditions.put(name, value);
     }
@@ -17,5 +58,21 @@ public class RuntimeEnvironment {
             return false;
         }
         return conditions.get(name);
+    }
+
+    public void setRepositoryPath(String repositoryPath) {
+        this.repositoryPath = repositoryPath;
+    }
+
+    public String getRepositoryPath() {
+        return repositoryPath;
+    }
+
+    public void setSourceFilePath(String sourceFilePath) {
+        this.sourceFilePath = sourceFilePath;
+    }
+
+    public String getSourceFilePath() {
+        return sourceFilePath;
     }
 }

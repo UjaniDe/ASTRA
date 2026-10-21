@@ -10,6 +10,8 @@ import astra.toylang.ast.ProgramNode;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 public class GitComparisonService {
 
@@ -45,6 +47,30 @@ public class GitComparisonService {
         ASTComparator comparator = new ASTComparator();
 
         return comparator.compare(oldAST, newAST);
+    }
+
+
+    public Map<String, List<StructuralChange>> compareChangedToyFiles(
+            String oldRevision,
+            String newRevision) throws IOException {
+
+        GitChangedFileDetector detector = new GitChangedFileDetector();
+
+        List<String> changedFiles = detector.findChangedToyFiles(
+            repositoryPath, oldRevision, newRevision
+        );
+
+        Map<String, List<StructuralChange>> results =
+            new LinkedHashMap<>();
+
+        for (String file : changedFiles) {
+            results.put(
+                file,
+                compare(oldRevision, newRevision, file)
+            );
+        }
+
+        return results;
     }
 
     private ProgramNode parse(String source) {

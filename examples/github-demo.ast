@@ -1,0 +1,10 @@
+workflow github_commit_analysis {
+    compare "ec45173114f9b0b4a06ca6e66ad2ecb65912653c" with "bac3431c9bf7c82f57132798da96c37193e50b0a"
+    analyze_changes
+
+    if security_change {
+        report
+    } else {
+        run_tests
+    }
+}

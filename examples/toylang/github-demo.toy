@@ -1,0 +1,12 @@
+
+import auth;
+import audit;
+
+function grantAccess(user) {
+    if (user.isAdmin || user.isGuest) {
+        logAccess(user, "granted");
+        return true;
+    } else {
+        return false;
+    }
+}
