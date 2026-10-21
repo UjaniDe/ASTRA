@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ ! -d "$PROJECT_ROOT/target/classes" ]; then
+    echo "ASTRA is not built. Run: mvn compile" >&2
+    exit 1
+fi
+
+if [ ! -f "$PROJECT_ROOT/target/runtime-classpath.txt" ]; then
+    (
+        cd "$PROJECT_ROOT"
+        mvn -q dependency:build-classpath \
+          -Dmdep.outputFile=target/runtime-classpath.txt
+    )
+fi
+
+CP="$PROJECT_ROOT/target/classes:$(cat "$PROJECT_ROOT/target/runtime-classpath.txt")"
+
+exec java -cp "$CP" astra.cli.AstraCLI "$@"
